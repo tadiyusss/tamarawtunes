@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang='en'>
+<head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/static/colors.css">
+    <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css' rel='stylesheet' integrity='sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT' crossorigin='anonymous'>
+    <style>
+        .sidebar{
+            height: 100%;
+            width: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            padding-top: 40px;
+        }
+        .sidebar-item{
+            text-align: center;
+        }
+        .sidebar-icon{
+            width: 22px;
+        }
+        .profile{
+            width: 45px;
+        }
+        .content{
+            height: calc(100vh - 100px);
+            
+            
+        }
+        .form-query{
+            min-width: 500px;
+        }
+        .search-query{
+            border: 1px solid #EAF6FF;
+            width: 400px;
+            height: 35px;
+        }
+        tr:hover{
+            background-color: #232528;
+        }
+        table{
+            width: 100%;
+            min-width: 1200px;
+        }
+        th{ 
+            border-bottom: 2px solid #232528;
+            padding: 20px 0 20px 0;
+        }
+        td{
+            padding: 20px 0 20px 0;
+        }
+        .bottom-nav{
+            overflow: hidden;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            min-width: 1350px;
+        }
+        .music-details, .music-controls, .sound-controls{
+            float: left;
+            width: 33.33%;
+            height: 100px;
+            min-width: 300px;
+        }
+        audio {
+            filter: sepia(20%) saturate(70%) grayscale(1) contrast(99%) invert(12%);
+            width: 200px;
+            height: 25px;
+        }
+        .music-controls-item img{
+            width: 25px;
+        }
+        .sound-control-group{
+            margin-top: 35px;
+        }
+        .volume-slider{
+            height: 5px;
+            margin-bottom: 100px;
+            -webkit-appearance:none;
+            border-radius: 30px;
+            background: #7c8082;
+        }
+        .volume-slider::-webkit-slider-thumb{
+            -webkit-appearance: none !important;
+            width: 15px;
+            height:15px;
+            background: #EAF6FF;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .music-slider{
+            -webkit-appearance:none;
+            height: 5px;
+            border-radius: 30px;
+            background: #7c8082;
+        }
+        .music-slider::-webkit-slider-thumb{
+            -webkit-appearance: none !important;
+            width: 15px;
+            height:15px;
+            background: #EAF6FF;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        input[type='range']{
+            cursor: pointer;
+        }
+        .alerts{
+            overflow: hidden;
+            position: fixed;
+            bottom: 0;
+            margin-bottom: 110px;
+            width: 300px;
+        }
+    </style>
+</head>
+<body class="my-darker my-light-text">
+    <div class="content p-5 overflow-auto">
+        <form class="form-query" action="">
+            <input class="p-3 my-light-text my-darker rounded-pill search-query" type="text" name="query" placeholder="Search">
+        </form>
+        <h1 class="mt-5 pt-4">Your Music</h1>
+        <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#uploadModal">
+            Upload
+        </button>
+        <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="uploadModalLabel">Upload music</h1>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group mb-3 mt-3">
+                        <span class="input-group-text bg-dark text-light" id="basic-addon1" id="importLink">Link</span>
+                        <input type="text" class="form-control bg-dark text-light" name="link" id="importLink" required>
+                    </div>
+                    <div class="input-group mb-3">
+                        <label class="input-group-text bg-dark text-light" for="importSource">Import from</label>
+                        <select class="form-select bg-dark text-light" id="importSource" name="import_from">
+                            <option value="youtube">Youtube</option>
+                            <option value="spotify">Spotify</option>
+                        </select>
+                    </div>
+                    <p class="text-success" id="statusForm"></p>
+                </div>
+                <div class="modal-footer">
+                    <div class="spinner-border text-light d-none" role="status" id="spinnerForm"></div>
+                    <button class="btn btn-outline-light" onclick="submitImport()" id="importBtn">Import</button>
+                </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+
+        <table class="mt-5 fw-normal">
+            <thead>
+                <tr class="text-muted">
+                    <th class="fw-normal p-3" scope="col">#</th>
+                    <th class="fw-normal" scope="col">Title</th>
+                    <th class="fw-normal" scope="col">Date Added</th>
+                    <th class="fw-normal" scope="col">Duration</th>
+                    <th class="fw-normal" scope="col"></th>
+                </tr>
+            </thead>
+            <tbody class="m-5">
+                {% for music in music_list %}
+                <tr class="p-3">
+                    <td class="p-3">{{loop.index}}</td>
+                    <td>{{music.title}}</td>
+                    <td>{{music.date}}</td>
+                    <td>{{music.duration}}</td>
+                    <td>
+                        <div class="dropdown">
+                            <svg role="button" data-bs-toggle="dropdown" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
+                                <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                            </svg>
+                            <ul class="dropdown-menu dropdown-menu-dark">
+                                <li><a class="dropdown-item" onclick="AddQueue('static/musics/{{music.id}}.mp3')">Add to queue</a></li>
+                                <li><a class="dropdown-item" onclick="DeleteMusic('{{music.id}}')">Delete</a></li>
+                            </ul>
+                        </div>
+                        
+                    </td>
+                </tr>                
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="alerts" id="alerts">
+        </div>
+    </div>
+    <div class="bottom-nav my-light-text my-dark">
+        <div class="music-details">
+            <img class="my-4 rounded mx-4 float-start" src="/static/images/album_img.jfif" width="55px" alt="">
+            <h5 class="pt-4">Captivated</h5>
+            <p class="text-muted" >IV of Spade</p>
+        </div>
+        <div class="music-controls text-center">
+            <audio id="AudioPlayer"></audio>
+            <div class="btn-group mt-3">
+                <button class="my-dark border-0 music-controls-item"><img src="/static/images/skip-previous.svg" alt="" srcset=""></button>
+                <button class="my-dark border-0 music-controls-item mx-3" onclick="PausePlay()"><img id="controlTrack" src="/static/images/play.svg" alt="" srcset=""></button>
+                <button class="my-dark border-0 music-controls-item" onclick="NextQueue()"><img src="/static/images/skip-next.svg" alt="" srcset=""></button>
+            </div><br/>
+            <input class="mt-3 w-100 music-slider" type="range" id="seekSlider" min="0" max="100">
+        </div>
+        <div class="sound-controls">
+            <div class="sound-control-group float-end mx-5">
+                <img class="" src="/static/images/audio.svg" alt="">
+                <input class="volume-slider mx-4" type="range" id="VolumeSlider" min="0" max="100" value="10">
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+    <script>
+        let AudioPlayer = document.getElementById("AudioPlayer");
+        let seekSlider = document.getElementById("seekSlider");
+        let VolumeSlider = document.getElementById("VolumeSlider");
+        let Alerts = document.getElementById("alerts");
+        let API_URL = "http://192.168.254.114:25565/"
+        var MusicQueue = [];
+    
+        //eventlistener for seek slider change
+        seekSlider.addEventListener("change", () => {
+            AudioPlayer.currentTime = (AudioPlayer.duration / 100) * seekSlider.value;
+        });
+        
+        //eventlistener for volume slider change
+        VolumeSlider.addEventListener("change", () => {
+            AudioPlayer.volume = VolumeSlider.value / 100;
+        });
+
+        //eventlistener for audio player time update
+        AudioPlayer.addEventListener("timeupdate", () => {
+            seekSlider.value = (100 / AudioPlayer.duration) * AudioPlayer.currentTime;
+        });
+
+        //eventlistener for audio player ended
+        AudioPlayer.addEventListener("ended", () => {
+            if(MusicQueue.length > 0){
+                AudioPlayer.src = MusicQueue[0];
+                MusicQueue.shift();
+                AudioPlayer.play();
+            }
+        });
+
+        function submitImport(){
+            let linkForm = document.getElementById("importLink");
+            let sourceForm = document.getElementById("importSource");
+            let spinnerForm = document.getElementById("spinnerForm");
+            var importBtn = document.getElementById("importBtn");
+
+            if (linkForm.value != ""){
+                linkForm.classList.remove("border");
+                linkForm.classList.remove("border-danger");
+                spinnerForm.classList.remove("d-none");
+                importBtn.disabled = true;
+                let data = {
+                    "link": linkForm.value,
+                    "source": sourceForm.value
+                }
+                $.post(API_URL + "api/import/music", data, function(result){
+                    console.log(result);
+                    importBtn.disabled = false;
+                    spinnerForm.classList.add("d-none");
+                    if (result.status == "success"){
+                        linkForm.value = "";
+                        $('#uploadModal').modal('hide');
+                    } else {
+                        linkForm.classList.add("border");
+                        linkForm.classList.add("border-danger");
+                        document.getElementById("statusForm").innerHTML = result.message;
+                    }
+                });
+            }else{
+                linkForm.classList.add("border");
+                linkForm.classList.add("border-danger");
+            }
+            
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function DeleteMusic(id){
+            data = {
+                "id": id
+            }
+            console.log(data)
+            $.post(API_URL + "api/delete/music", data, function(result){
+                document.location.reload(true);
+                console.log(result);
+            });
+        }
+
+        function AddQueue(path){
+            console.log('add queue ' + path)
+            MusicQueue.push(path);
+            console.log(MusicQueue);
+            Alerts.innerHTML += `
+                <div class="alert alert-light text-dark fade" role="alert">
+                    Added to your queue!
+                </div>
+            `;
+            sleep(3000).then(() => {
+                //do something after the sleep
+                Alerts.innerHTML = "";
+            });
+        }
+
+        function NextQueue(){
+            if(MusicQueue.length > 0){
+                AudioPlayer.src = MusicQueue[0];
+                MusicQueue.shift();
+                AudioPlayer.play();
+            } else {
+                AudioPlayer.src = "";
+            }
+        }
+        
+        function PausePlay(){
+            if(AudioPlayer.paused){
+                if(AudioPlayer.src == ""){
+                    AudioPlayer.src = MusicQueue[0];
+                    MusicQueue.shift();
+                }
+                AudioPlayer.play();
+                console.log('playing...');
+            }else{
+                AudioPlayer.pause();
+                console.log('paused...');
+            }
+        }
+    </script>
+    <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js' integrity='sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8' crossorigin='anonymous'></script>
+</body>
+</html>
