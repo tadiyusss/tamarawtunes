@@ -120,6 +120,8 @@
     <div class="content p-5 overflow-auto">
         <form class="form-query" action="">
             <input class="p-3 my-light-text my-darker rounded-pill search-query" type="text" name="query" placeholder="Search">
+            <div class="alerts" id="alerts">
+            </div>
         </form>
         <h1 class="mt-5 pt-4">Your Music</h1>
         <button type="button" class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#uploadModal">
@@ -156,8 +158,6 @@
 
 
 
-
-
         <table class="mt-5 fw-normal">
             <thead>
                 <tr class="text-muted">
@@ -191,8 +191,7 @@
                 {% endfor %}
             </tbody>
         </table>
-        <div class="alerts" id="alerts">
-        </div>
+        
     </div>
     <div class="bottom-nav my-light-text my-dark">
         <div class="music-details">
@@ -201,7 +200,7 @@
             <p class="text-muted" >IV of Spade</p>
         </div>
         <div class="music-controls text-center">
-            <audio id="AudioPlayer"></audio>
+            <audio id="AudioPlayer" crossorigin=anonymous src=""></audio>
             <div class="btn-group mt-3">
                 <button class="my-dark border-0 music-controls-item"><img src="/static/images/skip-previous.svg" alt="" srcset=""></button>
                 <button class="my-dark border-0 music-controls-item mx-3" onclick="PausePlay()"><img id="controlTrack" src="/static/images/play.svg" alt="" srcset=""></button>
@@ -222,9 +221,10 @@
         let seekSlider = document.getElementById("seekSlider");
         let VolumeSlider = document.getElementById("VolumeSlider");
         let Alerts = document.getElementById("alerts");
-        let API_URL = "http://192.168.254.114:25565/"
+        let API_URL = "http://{{ request.environ['HTTP_HOST'] }}/"
         var MusicQueue = [];
-    
+        
+
         //eventlistener for seek slider change
         seekSlider.addEventListener("change", () => {
             AudioPlayer.currentTime = (AudioPlayer.duration / 100) * seekSlider.value;
@@ -326,14 +326,21 @@
         
         function PausePlay(){
             if(AudioPlayer.paused){
-                if(AudioPlayer.src == ""){
+                if(AudioPlayer.src == "" && MusicQueue.length > 0){
                     AudioPlayer.src = MusicQueue[0];
                     MusicQueue.shift();
+                }else if (AudioPlayer.src == "" && MusicQueue.length == 0){
+                    Alerts.innerHTML += `<div class="alert alert-light text-dark fade" role="alert">Please add a music to your queue list.</div>`;
+                }else if (AudioPlayer.src == "http://192.168.254.106:25565/"){
+                    Alerts.innerHTML += `<div class="alert alert-light text-dark fade" role="alert">Please add a music to your queue list.</div>`;
+                }else{
+                    AudioPlayer.play();
+                    console.log('playing...');
                 }
-                AudioPlayer.play();
-                console.log('playing...');
+
             }else{
                 AudioPlayer.pause();
+                document.getElementById("controlTrack").src = "/static/images/play.svg";
                 console.log('paused...');
             }
         }
