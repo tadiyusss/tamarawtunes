@@ -26,6 +26,7 @@ def index():
 @app.route('/api/get/music', methods=['POST'])
 def api_get_music():
     id = request.form.get('id')
+    print(request.form)
     if id == None:
         return_data = {
             'status': 'error',

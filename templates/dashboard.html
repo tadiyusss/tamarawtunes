@@ -108,11 +108,13 @@
             cursor: pointer;
         }
         .alerts{
-            overflow: hidden;
             position: fixed;
             bottom: 0;
             margin-bottom: 110px;
             width: 300px;
+        }
+        .music-row{
+
         }
     </style>
 </head>
@@ -156,8 +158,6 @@
             </div>
         </div>
 
-
-
         <table class="mt-5 fw-normal">
             <thead>
                 <tr class="text-muted">
@@ -170,24 +170,24 @@
             </thead>
             <tbody class="m-5">
                 {% for music in music_list %}
-                <tr class="p-3">
-                    <td class="p-3">{{loop.index}}</td>
-                    <td>{{music.title}}</td>
-                    <td>{{music.date}}</td>
-                    <td>{{music.duration}}</td>
-                    <td>
-                        <div class="dropdown">
-                            <svg role="button" data-bs-toggle="dropdown" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
-                                <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-                            </svg>
-                            <ul class="dropdown-menu dropdown-menu-dark">
-                                <li><a class="dropdown-item" onclick="AddQueue('static/musics/{{music.id}}.mp3')">Add to queue</a></li>
-                                <li><a class="dropdown-item" onclick="DeleteMusic('{{music.id}}')">Delete</a></li>
-                            </ul>
-                        </div>
-                        
-                    </td>
-                </tr>                
+                    <tr class="p-3 cursor-pointer" onclick="AddNextMusic('static/musics/{{music.id|string}}.mp3')">
+                        <td class="p-3">{{loop.index}}</td>
+                        <td>{{music.title}}</td>
+                        <td>{{music.date}}</td>
+                        <td>{{music.duration}}</td>
+                        <td>
+                            <div class="dropdown">
+                                <svg role="button" data-bs-toggle="dropdown" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
+                                    <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                </svg>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                    <li><a class="dropdown-item" onclick="AddQueue('static/musics/{{music.id}}.mp3')">Add to queue</a></li>
+                                    <li><a class="dropdown-item" onclick="DeleteMusic('{{music.id}}')">Delete</a></li>
+                                </ul>
+                            </div>
+                            
+                        </td>
+                    </tr>                
                 {% endfor %}
             </tbody>
         </table>
@@ -200,7 +200,7 @@
             <p class="text-muted" >IV of Spade</p>
         </div>
         <div class="music-controls text-center">
-            <audio id="AudioPlayer" crossorigin=anonymous src=""></audio>
+            <audio id="AudioPlayer"></audio>
             <div class="btn-group mt-3">
                 <button class="my-dark border-0 music-controls-item"><img src="/static/images/skip-previous.svg" alt="" srcset=""></button>
                 <button class="my-dark border-0 music-controls-item mx-3" onclick="PausePlay()"><img id="controlTrack" src="/static/images/play.svg" alt="" srcset=""></button>
@@ -221,7 +221,6 @@
         let seekSlider = document.getElementById("seekSlider");
         let VolumeSlider = document.getElementById("VolumeSlider");
         let Alerts = document.getElementById("alerts");
-        let API_URL = "http://{{ request.environ['HTTP_HOST'] }}/"
         var MusicQueue = [];
         
 
@@ -264,7 +263,7 @@
                     "link": linkForm.value,
                     "source": sourceForm.value
                 }
-                $.post(API_URL + "api/import/music", data, function(result){
+                $.post("/api/import/music", data, function(result){
                     console.log(result);
                     importBtn.disabled = false;
                     spinnerForm.classList.add("d-none");
@@ -288,15 +287,28 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
+        function GetMusicInfo(id){
+            data = {
+                "id": id.toString()
+            }
+            $.post("/api/get/music", data, function(result){
+                console.log(result);
+            });
+        }
+
         function DeleteMusic(id){
             data = {
                 "id": id
             }
             console.log(data)
-            $.post(API_URL + "api/delete/music", data, function(result){
-                document.location.reload(true);
+            $.post("/api/delete/music", data, function(result){
                 console.log(result);
             });
+        }
+
+        function AddNextMusic(path){
+            AudioPlayer.src = path;
+            AudioPlayer.play();
         }
 
         function AddQueue(path){
@@ -304,7 +316,7 @@
             MusicQueue.push(path);
             console.log(MusicQueue);
             Alerts.innerHTML += `
-                <div class="alert alert-light text-dark fade" role="alert">
+                <div class="alert alert-light text-dark " role="alert">
                     Added to your queue!
                 </div>
             `;
@@ -330,9 +342,10 @@
                     AudioPlayer.src = MusicQueue[0];
                     MusicQueue.shift();
                 }else if (AudioPlayer.src == "" && MusicQueue.length == 0){
-                    Alerts.innerHTML += `<div class="alert alert-light text-dark fade" role="alert">Please add a music to your queue list.</div>`;
-                }else if (AudioPlayer.src == "http://192.168.254.106:25565/"){
-                    Alerts.innerHTML += `<div class="alert alert-light text-dark fade" role="alert">Please add a music to your queue list.</div>`;
+                    Alerts.innerHTML += `<div class="alert alert-light text-dark " role="alert">Please add a music to your queue list.</div>`;
+                    sleep(3000).then(() => {
+                        Alerts.innerHTML = "";
+                    });
                 }else{
                     AudioPlayer.play();
                     console.log('playing...');
