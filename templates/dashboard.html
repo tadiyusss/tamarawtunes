@@ -113,15 +113,15 @@
             margin-bottom: 110px;
             width: 300px;
         }
-        .music-row{
-
+        .music-name{
+            width: 65%;
         }
     </style>
 </head>
 <body class="my-darker my-light-text">
     <div class="content p-5 overflow-auto">
         <form class="form-query" action="">
-            <input class="p-3 my-light-text my-darker rounded-pill search-query" type="text" name="query" placeholder="Search">
+            <input class="p-3 my-light-text my-darker rounded-pill search-query my-1" type="text" name="query" placeholder="Search">
             <div class="alerts" id="alerts">
             </div>
         </form>
@@ -170,11 +170,11 @@
             </thead>
             <tbody class="m-5">
                 {% for music in music_list %}
-                    <tr class="p-3 cursor-pointer" onclick="AddNextMusic('static/musics/{{music.id|string}}.mp3')">
-                        <td class="p-3">{{loop.index}}</td>
-                        <td>{{music.title}}</td>
-                        <td>{{music.date}}</td>
-                        <td>{{music.duration}}</td>
+                    <tr class="p-3">
+                        <td class="p-3" onclick="AddNextMusic('music.id|string')">{{loop.index}}</td>
+                        <td onclick="AddNextMusic('{{music.id|string}}')">{{music.title}}</td>
+                        <td onclick="AddNextMusic('{{music.id|string}}')">{{music.date}}</td>
+                        <td onclick="AddNextMusic('{{music.id|string}}')">{{music.duration}}</td>
                         <td>
                             <div class="dropdown">
                                 <svg role="button" data-bs-toggle="dropdown" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
@@ -195,9 +195,9 @@
     </div>
     <div class="bottom-nav my-light-text my-dark">
         <div class="music-details">
-            <img class="my-4 rounded mx-4 float-start" src="/static/images/album_img.jfif" width="55px" alt="">
-            <h5 class="pt-4">Captivated</h5>
-            <p class="text-muted" >IV of Spade</p>
+            <img class="my-4 rounded mx-4 float-start" src="/static/images/album_img.jfif" width="55px" alt="" id="music-thumbnail">
+            <h5 class="pt-4 text-truncate music-name" id="music-name">Lola Amour – Maybe Maybe (Official Lyric Video)</h5>
+            <p class="text-muted text-truncate" id="music-author">IV of Spade</p>
         </div>
         <div class="music-controls text-center">
             <audio id="AudioPlayer"></audio>
@@ -221,8 +221,13 @@
         let seekSlider = document.getElementById("seekSlider");
         let VolumeSlider = document.getElementById("VolumeSlider");
         let Alerts = document.getElementById("alerts");
+
+        let musicNamePlaceholder = document.getElementById("music-name");
+        let musicAuthorPlaceholder = document.getElementById("music-author");
+        let musicThumbnailPlaceholder = document.getElementById("music-thumbnail");
+
         var MusicQueue = [];
-        
+        var returnData;
 
         //eventlistener for seek slider change
         seekSlider.addEventListener("change", () => {
@@ -252,7 +257,8 @@
             let linkForm = document.getElementById("importLink");
             let sourceForm = document.getElementById("importSource");
             let spinnerForm = document.getElementById("spinnerForm");
-            var importBtn = document.getElementById("importBtn");
+            let importBtn = document.getElementById("importBtn");
+            
 
             if (linkForm.value != ""){
                 linkForm.classList.remove("border");
@@ -287,12 +293,14 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
+
+        //get, delete, queue, next music
         function GetMusicInfo(id){
             data = {
-                "id": id.toString()
+                "id": id
             }
             $.post("/api/get/music", data, function(result){
-                console.log(result);
+                returnData = result;
             });
         }
 
@@ -306,8 +314,12 @@
             });
         }
 
-        function AddNextMusic(path){
-            AudioPlayer.src = path;
+        function AddNextMusic(id){
+            GetMusicInfo(id);
+            musicNamePlaceholder.innerHTML = returnData.title;
+            musicAuthorPlaceholder.innerHTML = returnData.author;
+            musicThumbnailPlaceholder.src = 'static/thumbnails/' + returnData.id + '.jpg';
+            AudioPlayer.src = 'static/musics/' + returnData.id + '.mp3';
             AudioPlayer.play();
         }
 
@@ -321,7 +333,6 @@
                 </div>
             `;
             sleep(3000).then(() => {
-                //do something after the sleep
                 Alerts.innerHTML = "";
             });
         }
@@ -336,6 +347,7 @@
             }
         }
         
+        //play, pause music
         function PausePlay(){
             if(AudioPlayer.paused){
                 if(AudioPlayer.src == "" && MusicQueue.length > 0){

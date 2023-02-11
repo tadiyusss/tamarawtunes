@@ -48,6 +48,7 @@ def api_get_music():
                 'message': 'File not found'
             }
             return return_data
+        print(db_result)
         return db_result
 
 @app.route('/api/delete/music', methods=['POST'])
@@ -79,11 +80,14 @@ def api_import():
         return return_data
     if request.form.get('source') == "youtube":
         yt = YouTube(url)
+        seconds = yt.length % 60
+        if seconds < 10:
+            seconds = "0" + str(seconds)
         data = {
             'title': yt.title,
             'thumbnail': yt.thumbnail_url,
             'minutes': yt.length // 60,
-            'seconds': yt.length % 60,
+            'seconds': seconds,
             'duration': str( yt.length // 60) + ":" + str(yt.length % 60),
             'author': yt.author,
             'date': date.today().strftime("%b %d %Y"),
@@ -117,6 +121,10 @@ def api_import():
             'status': 'error',
             'message': 'Invalid import method'
         }
+
+@app.route('/testing')
+def testing():
+    return render_template('test.html')
 
 if '-d' in sys.argv:
     app.run(host="0.0.0.0", port=25565, debug=True)
