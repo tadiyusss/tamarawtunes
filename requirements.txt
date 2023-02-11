@@ -1,5 +1,5 @@
 Flask==2.2.2
-Flask_Mobility==1.1.0
 pysondb==1.6.7
-python_bcrypt==0.3.2
-validator_collection==1.5.0
+pytube==12.1.2
+pytube3==9.6.4
+wget==3.2
