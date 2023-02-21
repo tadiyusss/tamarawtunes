@@ -11,6 +11,12 @@ import os
 app = Flask(__name__)
 musics_db = getDb('musics.json')
 
+if os.path.isdir('static/musics') != True:
+    os.mkdir('static/musics')
+if os.path.isdir('static/thumbnails') != True:
+    os.mkdir('static/thumbnails')
+
+
 def randomstring(length):
     letters = string.ascii_lowercase + string.ascii_uppercase + string.digits
     return ''.join(random.choice(letters) for i in range(length))
@@ -26,11 +32,10 @@ def index():
 @app.route('/api/get/music', methods=['POST'])
 def api_get_music():
     id = request.form.get('id')
-    print(request.form)
     if id == None:
         return_data = {
             'status': 'error',
-            'message': id
+            'message': 'Invalid id'
         }
         return return_data
     elif id == "all":
@@ -41,20 +46,19 @@ def api_get_music():
         return return_data
     else: 
         try:
-            db_result = musics_db.getById(id)
+            db_result = musics_db.getByQuery({"identifier": id})[0]
         except Exception as e:
             return_data = {
                 'status': 'error',
                 'message': 'File not found'
             }
             return return_data
-        print(db_result)
         return db_result
 
 @app.route('/api/delete/music', methods=['POST'])
 def api_delete_music():
     id = request.form.get('id')
-    if musics_db.deleteById(id):
+    if musics_db.deleteById(musics_db.getByQuery({"identifier": id})[0]['id']):
         os.remove('static/musics/' + id + '.mp3')
         os.remove('static/thumbnails/' + id + '.jpg')
         return_data = {
@@ -88,13 +92,14 @@ def api_import():
             'thumbnail': yt.thumbnail_url,
             'minutes': yt.length // 60,
             'seconds': seconds,
-            'duration': str( yt.length // 60) + ":" + str(yt.length % 60),
+            'duration': str( yt.length // 60) + ":" + str(seconds),
             'author': yt.author,
             'date': date.today().strftime("%b %d %Y"),
-            'url': url,
+            'identifier': randomstring(16),
+            'url': url
         }
         musics_db.add(data)
-        id = musics_db.getByQuery({"url": url})[0]['id']
+        id = musics_db.getByQuery({"url": url})[0]['identifier']
         try:
             wget.download(yt.thumbnail_url, 'static/thumbnails/' + str(id) + '.jpg')
             yt.streams.filter(only_audio=True).first().download('static/musics', str(id) + '.mp3')
@@ -122,9 +127,6 @@ def api_import():
             'message': 'Invalid import method'
         }
 
-@app.route('/testing')
-def testing():
-    return render_template('test.html')
 
 if '-d' in sys.argv:
     app.run(host="0.0.0.0", port=25565, debug=True)
