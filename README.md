@@ -16,7 +16,6 @@ __Clone repository__
 ```
   git clone https://github.com/tadiyusss/music-player
   cd music-player
-
 ```
 __Install requirements__
 ```
