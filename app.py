@@ -128,7 +128,5 @@ def api_import():
         }
 
 
-if '-d' in sys.argv:
-    app.run(host="0.0.0.0", port=25565, debug=True)
-else:
-    app.run(host="0.0.0.0", port=80)
+if __name__ == '__main__':
+    app.run()
