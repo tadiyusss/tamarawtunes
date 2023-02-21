@@ -37,6 +37,9 @@
             width: 400px;
             height: 35px;
         }
+        .search-query:focus{
+            outline: none;
+        }
         tr:hover{
             background-color: #232528;
         }
@@ -148,7 +151,7 @@
                             <option value="spotify">Spotify</option>
                         </select>
                     </div>
-                    <p class="text-success" id="statusForm"></p>
+                    <p class="text-light" id="statusForm"></p>
                 </div>
                 <div class="modal-footer">
                     <div class="spinner-border text-light d-none" role="status" id="spinnerForm"></div>
@@ -157,8 +160,7 @@
                 </div>
             </div>
         </div>
-
-        <table class="mt-5 fw-normal">
+        <table class="mt-5 fw-normal" id="musicListTable">
             <thead>
                 <tr class="text-muted">
                     <th class="fw-normal p-3" scope="col">#</th>
@@ -168,36 +170,17 @@
                     <th class="fw-normal" scope="col"></th>
                 </tr>
             </thead>
-            <tbody class="m-5">
-                {% for music in music_list %}
-                    <tr class="p-3">
-                        <td class="p-3" onclick="AddNextMusic('music.id|string')">{{loop.index}}</td>
-                        <td onclick="AddNextMusic('{{music.id|string}}')">{{music.title}}</td>
-                        <td onclick="AddNextMusic('{{music.id|string}}')">{{music.date}}</td>
-                        <td onclick="AddNextMusic('{{music.id|string}}')">{{music.duration}}</td>
-                        <td>
-                            <div class="dropdown">
-                                <svg role="button" data-bs-toggle="dropdown" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
-                                    <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-                                </svg>
-                                <ul class="dropdown-menu dropdown-menu-dark">
-                                    <li><a class="dropdown-item" onclick="AddQueue('static/musics/{{music.id}}.mp3')">Add to queue</a></li>
-                                    <li><a class="dropdown-item" onclick="DeleteMusic('{{music.id}}')">Delete</a></li>
-                                </ul>
-                            </div>
-                            
-                        </td>
-                    </tr>                
-                {% endfor %}
+            <tbody class="m-5" id="musicList">
+    
             </tbody>
         </table>
         
     </div>
     <div class="bottom-nav my-light-text my-dark">
         <div class="music-details">
-            <img class="my-4 rounded mx-4 float-start" src="/static/images/album_img.jfif" width="55px" alt="" id="music-thumbnail">
-            <h5 class="pt-4 text-truncate music-name" id="music-name">Lola Amour – Maybe Maybe (Official Lyric Video)</h5>
-            <p class="text-muted text-truncate" id="music-author">IV of Spade</p>
+            <img class="my-4 rounded mx-4 float-start" src="/static/images/blank_album.png" width="55px" alt="" id="music-thumbnail">
+            <h5 class="pt-4 text-truncate music-name" id="music-name" href=""><span class="placeholder col-7"></span></h5>
+            <p class="text-muted text-truncate" id="music-author"><span class="placeholder col-4"></span></p>
         </div>
         <div class="music-controls text-center">
             <audio id="AudioPlayer"></audio>
@@ -253,6 +236,28 @@
             }
         });
 
+        function updateList(){
+            data = {
+                "id": "all"
+            }
+            $.post("/api/get/music", data, function(result){
+                if(result.data.length > 0){
+                    let musicList = document.getElementById("musicList");
+                    musicList.innerHTML = "";
+                    for (let i = 0; i < result.data.length; i++){
+                        let music = result.data[i];
+                        musicList.innerHTML = musicList.innerHTML + `<tr class="p-3"><td class="p-3" onclick="AddNextMusic('${music.identifier}')">${i+1}</td><td onclick="AddNextMusic('${music.identifier}')">${music.title}</td><td onclick="AddNextMusic('${music.identifier}')">${music.date}</td><td onclick="AddNextMusic('${music.identifier}')">${music.duration}</td><td><div class="dropdown"><svg role="button" data-bs-toggle="dropdown" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg><ul class="dropdown-menu dropdown-menu-dark"><li><a class="dropdown-item" onclick="AddQueue('static/musics/${music.identifier}.mp3')">Add to queue</a></li><li><a class="dropdown-item" onclick="DeleteMusic('${music.identifier}')">Delete</a></li></ul></div></td>`
+                    }
+                } else {
+                    let musicList = document.getElementById("musicList");
+                    musicList.innerHTML = "";
+                    musicList.innerHTML = `<tr><td colspan="5" class="text-center fs-4">No music found</td></tr>`
+                }
+            });
+            
+            
+        }
+
         function submitImport(){
             let linkForm = document.getElementById("importLink");
             let sourceForm = document.getElementById("importSource");
@@ -275,7 +280,8 @@
                     spinnerForm.classList.add("d-none");
                     if (result.status == "success"){
                         linkForm.value = "";
-                        $('#uploadModal').modal('hide');
+                        $('#uploadModal').modal('hide');    
+                        updateList();
                     } else {
                         linkForm.classList.add("border");
                         linkForm.classList.add("border-danger");
@@ -301,6 +307,7 @@
             }
             $.post("/api/get/music", data, function(result){
                 returnData = result;
+                updateList();
             });
         }
 
@@ -311,16 +318,21 @@
             console.log(data)
             $.post("/api/delete/music", data, function(result){
                 console.log(result);
+                updateList();
             });
         }
 
         function AddNextMusic(id){
-            GetMusicInfo(id);
-            musicNamePlaceholder.innerHTML = returnData.title;
-            musicAuthorPlaceholder.innerHTML = returnData.author;
-            musicThumbnailPlaceholder.src = 'static/thumbnails/' + returnData.id + '.jpg';
-            AudioPlayer.src = 'static/musics/' + returnData.id + '.mp3';
-            AudioPlayer.play();
+            data = {
+                "id": id
+            }
+            $.post("/api/get/music", data, function(result){
+                musicNamePlaceholder.innerHTML = result.title;
+                musicAuthorPlaceholder.innerHTML = result.author;
+                musicThumbnailPlaceholder.src = '/static/thumbnails/' + id + '.jpg';
+                AudioPlayer.src = '/static/musics/' + id + '.mp3';
+                PausePlay();
+            });
         }
 
         function AddQueue(path){
@@ -360,15 +372,15 @@
                     });
                 }else{
                     AudioPlayer.play();
-                    console.log('playing...');
+                    document.getElementById("controlTrack").src = "/static/images/pause.svg";
                 }
 
             }else{
                 AudioPlayer.pause();
                 document.getElementById("controlTrack").src = "/static/images/play.svg";
-                console.log('paused...');
             }
         }
+        updateList();
     </script>
     <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js' integrity='sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8' crossorigin='anonymous'></script>
 </body>
