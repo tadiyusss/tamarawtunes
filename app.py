@@ -39,52 +39,22 @@ def index():
 
 @app.route('/api/get/music', methods=['POST'])
 def api_get_music():
-    mysql_cursor = mysql_hander.cursor()
-    search_query = request.form.get('search_query')
-    mode = request.form.get('mode')
-    if search_query == None:
-        return_data = {
-            'status': 'error',
-            'message': 'Invalid id'
-        }
-        return return_data
-    elif search_query == "all":
-        debug("Fetching all musics")
-        music_list = []
-        mysql_cursor.execute("SELECT * FROM tamarawtunes_musics")
-        rows = mysql_cursor.fetchall()
-        for row in rows:
-            data = {
-                'id': row[0],
-                'title':row[1],
-                'thumbnail': row[2],
-                'minutes': row[3],
-                'seconds': row[4],
-                'duration': row[5],
-                'author': row[6],
-                'date': row[7],
-                'identifier': row[8],
-                'url': row[9]
-            }
-            music_list.append(data)
-        return_data = {
-            'status': 'success',
-            'data': music_list
-        }
-        return return_data
-    elif mode == "title_search":
-        debug('Searching for title: ' + search_query)
-        mysql_cursor.execute('SELECT * FROM tamarawtunes_musics WHERE title LIKE %s', ('%' + search_query + '%',))
-        mysql_result = mysql_cursor.fetchall()
-        if len(mysql_result) == 0:
+    try:
+        mysql_cursor = mysql_hander.cursor()
+        search_query = request.form.get('search_query')
+        mode = request.form.get('mode')
+        if search_query == None:
             return_data = {
                 'status': 'error',
-                'message': 'File not found'
+                'message': 'Invalid id'
             }
             return return_data
-        else:
+        elif search_query == "all":
+            debug("Fetching all musics")
             music_list = []
-            for row in mysql_result:
+            mysql_cursor.execute("SELECT * FROM tamarawtunes_musics")
+            rows = mysql_cursor.fetchall()
+            for row in rows:
                 data = {
                     'id': row[0],
                     'title':row[1],
@@ -103,33 +73,96 @@ def api_get_music():
                 'data': music_list
             }
             return return_data
-    elif mode == "id_search":
-        debug('Searching for id: ' + search_query)
-        mysql_cursor.execute("SELECT * FROM tamarawtunes_musics WHERE identifier=%s", (search_query,))
-        mysql_result = mysql_cursor.fetchall()
-        if len(mysql_result) == 0:
-            return_data = {
-                'status': 'error',
-                'message': 'File not found'
-            }
-            return return_data
-        else:
-            return_data = {
-                'status': 'success',
-                'data': {
-                    'id': mysql_result[0][0],
-                    'title': mysql_result[0][1],
-                    'thumbnail': mysql_result[0][2],
-                    'minutes': mysql_result[0][3],
-                    'seconds': mysql_result[0][4],
-                    'duration': mysql_result[0][5],
-                    'author': mysql_result[0][6],
-                    'date': mysql_result[0][7],
-                    'identifier': mysql_result[0][8],
-                    'url': mysql_result[0][9]
+        elif mode == "title_search" and search_query != "":
+            debug('Searching for title: ' + search_query)
+            mysql_cursor.execute('SELECT * FROM tamarawtunes_musics WHERE title LIKE %s OR author LIKE %s', ('%' + search_query + '%', '%' + search_query + '%'))
+            mysql_result = mysql_cursor.fetchall()
+            if len(mysql_result) == 0:
+                return_data = {
+                    'status': 'error',
+                    'message': 'File not found'
                 }
-            }
-            return return_data
+                return return_data
+            else:
+                music_list = []
+                for row in mysql_result:
+                    data = {
+                        'id': row[0],
+                        'title':row[1],
+                        'thumbnail': row[2],
+                        'minutes': row[3],
+                        'seconds': row[4],
+                        'duration': row[5],
+                        'author': row[6],
+                        'date': row[7],
+                        'identifier': row[8],
+                        'url': row[9]
+                    }
+                    music_list.append(data)
+                return_data = {
+                    'status': 'success',
+                    'data': music_list
+                }
+                return return_data
+        elif mode == "id_search" and search_query != "":
+            debug('Searching for id: ' + search_query)
+            mysql_cursor.execute("SELECT * FROM tamarawtunes_musics WHERE identifier=%s", (search_query,))
+            mysql_result = mysql_cursor.fetchall()
+            if len(mysql_result) == 0:
+                return_data = {
+                    'status': 'error',
+                    'message': 'File not found'
+                }
+                return return_data
+            else:
+                return_data = {
+                    'status': 'success',
+                    'data': {
+                        'id': mysql_result[0][0],
+                        'title': mysql_result[0][1],
+                        'thumbnail': mysql_result[0][2],
+                        'minutes': mysql_result[0][3],
+                        'seconds': mysql_result[0][4],
+                        'duration': mysql_result[0][5],
+                        'author': mysql_result[0][6],
+                        'date': mysql_result[0][7],
+                        'identifier': mysql_result[0][8],
+                        'url': mysql_result[0][9]
+                    }
+                }
+                return return_data
+        else: 
+            mysql_cursor.execute("SELECT * FROM tamarawtunes_musics")
+            mysql_result = mysql_cursor.fetchall()
+            if len(mysql_result) == 0:
+                return_data = {
+                    'status': 'error',
+                    'message': 'File not found'
+                }
+                return return_data
+            else:
+                return_data = {
+                    'status': 'success',
+                    'data': {
+                        'id': mysql_result[0][0],
+                        'title': mysql_result[0][1],
+                        'thumbnail': mysql_result[0][2],
+                        'minutes': mysql_result[0][3],
+                        'seconds': mysql_result[0][4],
+                        'duration': mysql_result[0][5],
+                        'author': mysql_result[0][6],
+                        'date': mysql_result[0][7],
+                        'identifier': mysql_result[0][8],
+                        'url': mysql_result[0][9]
+                    }
+                }
+                return return_data
+    except mysql.connector.errors.DatabaseError:
+        return_data = {
+            'status': 'error',
+            'message': 'Flooding detected, skipping this request'
+        }
+        return return_data
 @app.route('/api/delete/music', methods=['POST'])
 def api_delete_music():
     
