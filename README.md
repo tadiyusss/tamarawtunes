@@ -1,5 +1,5 @@
 
-# Flask Music Player
+# TamarawTunes
 
 A simple music player application built using Python and Flask.
 
@@ -14,8 +14,8 @@ A simple music player application built using Python and Flask.
 
 __Clone repository__
 ```
-  git clone https://github.com/tadiyusss/music-player
-  cd music-player
+  git clone https://github.com/tadiyusss/tamarawtunes
+  cd tamarawtunes
 ```
 __Install requirements__
 ```
