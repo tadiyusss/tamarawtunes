@@ -1,5 +1,5 @@
 Flask==2.2.2
-pysondb==1.6.7
+mysql_connector_repackaged==0.3.1
 pytube==12.1.2
 pytube3==9.6.4
 wget==3.2
