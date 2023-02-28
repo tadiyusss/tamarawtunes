@@ -29,3 +29,7 @@ __Run script__
     python3 app.py
 ```
 
+__Run in gunicorn__
+```
+    gunicorn --bind 0.0.0.0 app:app --timeout 200
+```
