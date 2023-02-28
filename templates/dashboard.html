@@ -124,7 +124,7 @@
 <body class="my-darker my-light-text">
     <div class="content p-5 overflow-auto">
         <form class="form-query" action="">
-            <input class="p-3 my-light-text my-darker rounded-pill search-query my-1" type="text" name="query" placeholder="Search">
+            <input oninput="updateList(this.value, 'title_search')" class="p-3 my-light-text my-darker rounded-pill search-query my-1" type="text" name="query" placeholder="Search" id="search_input">
             <div class="alerts" id="alerts">
             </div>
         </form>
@@ -199,6 +199,7 @@
     </div>
     <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
     <script>
+        let SearchInput = document.getElementById("search_input");
         let AudioPlayer = document.getElementById("AudioPlayer");
         let seekSlider = document.getElementById("seekSlider");
         let VolumeSlider = document.getElementById("VolumeSlider");
@@ -235,17 +236,31 @@
             }
         });
 
-        function updateList(){
+        function searchMusic(){
             data = {
-                "id": "all"
+                "search_query": SearchInput.value,
+            }
+        }
+
+        function updateList(search_query, mode = "identifier"){
+            if(mode == "identifier"){
+                data = {
+                    "search_query": search_query,
+                }
+            }else{
+                data = {
+                    "search_query": search_query,
+                    "mode": mode,
+                }
             }
             $.post("/api/get/music", data, function(result){
+                console.log(result)
                 if(result.data.length > 0){
                     let musicList = document.getElementById("musicList");
                     musicList.innerHTML = "";
                     for (let i = 0; i < result.data.length; i++){
                         let music = result.data[i];
-                        musicList.innerHTML = musicList.innerHTML + `<tr class="p-3"><td class="p-3" onclick="AddNextMusic('${music.identifier}')">${i+1}</td><td onclick="AddNextMusic('${music.identifier}')">${music.title}</td><td onclick="AddNextMusic('${music.identifier}')">${music.date}</td><td onclick="AddNextMusic('${music.identifier}')">${music.duration}</td><td><div class="dropdown"><svg role="button" data-bs-toggle="dropdown" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg><ul class="dropdown-menu dropdown-menu-dark"><li><a class="dropdown-item" onclick="AddQueue('static/musics/${music.identifier}.mp3')">Add to queue</a></li><li><a class="dropdown-item" onclick="DeleteMusic('${music.identifier}')">Delete</a></li></ul></div></td>`
+                        musicList.innerHTML = musicList.innerHTML + `<tr class="p-3" style="cursor: pointer;"><td class="p-3" onclick="AddNextMusic('${music.identifier}')">${i+1}</td><td onclick="AddNextMusic('${music.identifier}')">${music.title}</td><td onclick="AddNextMusic('${music.identifier}')">${music.date}</td><td onclick="AddNextMusic('${music.identifier}')">${music.duration}</td><td><div class="dropdown"><svg role="button" data-bs-toggle="dropdown" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16"><path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg><ul class="dropdown-menu dropdown-menu-dark"><li><a class="dropdown-item" onclick="AddQueue('${music.identifier}')">Add to queue</a></li><li><a class="dropdown-item" onclick="DeleteMusic('${music.identifier}')">Delete</a></li></ul></div></td>`
                     }
                 } else {
                     let musicList = document.getElementById("musicList");
@@ -273,6 +288,7 @@
                     "link": linkForm.value,
                     "source": sourceForm.value
                 }
+                console.log(data)
                 $.post("/api/import/music", data, function(result){
                     console.log(result);
                     importBtn.disabled = false;
@@ -280,7 +296,7 @@
                     if (result.status == "success"){
                         linkForm.value = "";
                         $('#uploadModal').modal('hide');    
-                        updateList();
+                        updateList('all');
                     } else {
                         linkForm.classList.add("border");
                         linkForm.classList.add("border-danger");
@@ -306,7 +322,7 @@
             }
             $.post("/api/get/music", data, function(result){
                 returnData = result;
-                updateList();
+                updateList('all');
             });
         }
 
@@ -317,27 +333,28 @@
             console.log(data)
             $.post("/api/delete/music", data, function(result){
                 console.log(result);
-                updateList();
+                updateList('all');
             });
         }
 
         function AddNextMusic(id){
             data = {
-                "id": id
+                "search_query": id,
+                "mode": "id_search"
             }
             $.post("/api/get/music", data, function(result){
-                musicNamePlaceholder.innerHTML = result.title;
-                musicAuthorPlaceholder.innerHTML = result.author;
+                console.log(data);
+                console.log(result);
+                musicNamePlaceholder.innerHTML = result.data.title;
+                musicAuthorPlaceholder.innerHTML = result.data.author;
                 musicThumbnailPlaceholder.src = '/static/thumbnails/' + id + '.jpg';
                 AudioPlayer.src = '/static/musics/' + id + '.mp3';
                 PausePlay();
             });
         }
 
-        function AddQueue(path){
-            console.log('add queue ' + path)
-            MusicQueue.push(path);
-            console.log(MusicQueue);
+        function AddQueue(id){
+            MusicQueue.push(id);
             Alerts.innerHTML += `
                 <div class="alert alert-light text-dark " role="alert">
                     Added to your queue!
@@ -350,10 +367,20 @@
 
         function NextQueue(){
             if(MusicQueue.length > 0){
-                AudioPlayer.src = MusicQueue[0];
-                MusicQueue.shift();
-                AudioPlayer.play();
+                data = {
+                    "search_query": MusicQueue[0]
+                }
+                $.post("/api/get/music", data, function(result){
+                    musicNamePlaceholder.innerHTML = result.data.title;
+                    musicAuthorPlaceholder.innerHTML = result.data.author;
+                    musicThumbnailPlaceholder.src = '/static/thumbnails/' + MusicQueue[0] + '.jpg';
+                    AudioPlayer.src = '/static/musics/' + MusicQueue[0] + '.mp3';
+                    PausePlay();
+                    MusicQueue.shift();
+                });
             } else {
+                AudioPlayer.pause();
+                document.getElementById("controlTrack").src = "/static/images/play.svg";
                 AudioPlayer.src = "";
             }
         }
@@ -379,7 +406,7 @@
                 document.getElementById("controlTrack").src = "/static/images/play.svg";
             }
         }
-        updateList();
+        updateList('all');
     </script>
     <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js' integrity='sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8' crossorigin='anonymous'></script>
 </body>
