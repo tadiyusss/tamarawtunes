@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 from pytube import YouTube
-from datetime import date
+import datetime
+from colorama import Fore, Back, Style
 import mysql.connector
 import random
 import string
@@ -15,6 +16,10 @@ try:
 except mysql.connector.Error as error:
     print("Failed to connect to database: {}".format(error))
     exit()
+
+
+def debug(message):
+    print(Fore.YELLOW + f"{Fore.YELLOW}[{datetime.datetime.now().strftime('%m-%d-%y %I:%M:%S')}] [ DEBUG ] {Style.RESET_ALL} {str(message)}")
 
 def randomstring(length):
     letters = string.ascii_lowercase + string.ascii_uppercase + string.digits
@@ -44,7 +49,7 @@ def api_get_music():
         }
         return return_data
     elif search_query == "all":
-        print('[DEBUG] Fetching all musics')
+        debug("Fetching all musics")
         music_list = []
         mysql_cursor.execute("SELECT * FROM tamarawtunes_musics")
         rows = mysql_cursor.fetchall()
@@ -68,7 +73,7 @@ def api_get_music():
         }
         return return_data
     elif mode == "title_search":
-        print('[DEBUG] Searching for title: ' + search_query)
+        debug('Searching for title: ' + search_query)
         mysql_cursor.execute('SELECT * FROM tamarawtunes_musics WHERE title LIKE %s', ('%' + search_query + '%',))
         mysql_result = mysql_cursor.fetchall()
         if len(mysql_result) == 0:
@@ -99,7 +104,7 @@ def api_get_music():
             }
             return return_data
     elif mode == "id_search":
-        print('[DEBUG] Searching for id: ' + search_query)
+        debug('Searching for id: ' + search_query)
         mysql_cursor.execute("SELECT * FROM tamarawtunes_musics WHERE identifier=%s", (search_query,))
         mysql_result = mysql_cursor.fetchall()
         if len(mysql_result) == 0:
@@ -130,7 +135,7 @@ def api_delete_music():
     
     mysql_cursor = mysql_hander.cursor()
     id = request.form.get('id')
-    print('[DEBUG] Deleting music with id: ' + id)
+    debug('Deleting music with id: ' + id)
     mysql_cursor.execute("SELECT identifier FROM tamarawtunes_musics WHERE identifier = %s", (id,))
     mysql_result = mysql_cursor.fetchall()
     
@@ -162,7 +167,7 @@ def api_delete_music():
 def api_import():
     mysql_cursor = mysql_hander.cursor()
     url = request.form.get('link')
-    print('[DEBUG] Importing music with url: ' + url)
+    debug('Importing music with url: ' + url)
     #check for mysql duplicates
     mysql_cursor.execute("SELECT identifier FROM tamarawtunes_musics WHERE url = %s", (url,))
     mysql_result = mysql_cursor.fetchall()
@@ -179,10 +184,13 @@ def api_import():
         if seconds < 10:
             seconds = "0" + str(seconds)
         try:
-            mysql_cursor.execute("INSERT INTO tamarawtunes_musics (title, thumbnail, minutes, seconds, duration, author, date, identifier, url) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (yt.title, yt.thumbnail_url, yt.length // 60, int(seconds), str(yt.length // 60) + ":" + str(seconds), yt.author, date.today().strftime("%b %d %Y"), identifier, url))
-            mysql_hander.commit()
+            debug('Downloading audio file: ' + yt.title)
+            yt.streams.filter(file_extension='mp4').first().download('static/musics', identifier + '.mp3')
+            debug('Downloading thumbnail: ' + yt.thumbnail_url)
             wget.download(yt.thumbnail_url, 'static/thumbnails/' + identifier + '.jpg')
-            yt.streams.filter(only_audio=True).first().download('static/musics', identifier + '.mp3')
+            debug('Importing youtube data to mysql server')
+            mysql_cursor.execute("INSERT INTO tamarawtunes_musics (title, thumbnail, minutes, seconds, duration, author, date, identifier, url) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (yt.title, yt.thumbnail_url, yt.length // 60, int(seconds), str(yt.length // 60) + ":" + str(seconds), yt.author, datetime.datetime.now().strftime("%b %d %Y"), identifier, url))
+            mysql_hander.commit()
         except Exception as e:
             return_data = {
                 'status': 'error',
