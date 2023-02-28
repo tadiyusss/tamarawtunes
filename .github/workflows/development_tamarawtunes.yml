@@ -60,4 +60,4 @@ jobs:
         with:
           app-name: 'tamarawtunes'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_954061C858644776916A3927E43A7611 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_16B5D56D6C844090B3E698CBAE9060EC }}
