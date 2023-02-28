@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request
 from pytube import YouTube
 from datetime import date
-from pysondb import getDb
 import mysql.connector
 import random
 import string
