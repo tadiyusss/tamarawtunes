@@ -11,6 +11,9 @@ import os
 import time
 
 app = Flask(__name__)
+if os.path.isfile('config.json') != True:
+    print(Fore.RED + "Config file not found. Please make sure to create a config.json file." + Style.RESET_ALL)
+    exit()
 mysql_details = json.load(open('config.json'))
 try:
     mysql_hander  = mysql.connector.connect(host=mysql_details['host'],user=mysql_details['user'],password=mysql_details['password'],database=mysql_details['database'])
