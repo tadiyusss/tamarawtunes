@@ -6,7 +6,7 @@ A simple music player application built using Python and Flask.
 ## Requirements
 - Python
 - Flask
-- Pysondb
+- mysql-connector-python
 - Pytube
 - Pywget
 
@@ -21,6 +21,8 @@ __Install requirements__
 ```
     pip3 install -r requirements.txt
 ```
+
+before running the script you should edit the config.json file into your mysql credentials
 
 __Run script__
 ```
