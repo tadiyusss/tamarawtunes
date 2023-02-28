@@ -8,6 +8,7 @@ import string
 import json
 import wget
 import os
+import time
 
 app = Flask(__name__)
 mysql_details = json.load(open('config.json'))
@@ -217,8 +218,10 @@ def api_import():
         if seconds < 10:
             seconds = "0" + str(seconds)
         try:
+            time_start = time.time()
             debug('Downloading audio file: ' + yt.title)
             yt.streams.filter(file_extension='mp4').first().download('static/musics', identifier + '.mp3')
+            debug('Downloaded audio file: ' + yt.title + ' in ' + str(time.time() - time_start) + ' seconds')
             debug('Downloading thumbnail: ' + yt.thumbnail_url)
             wget.download(yt.thumbnail_url, 'static/thumbnails/' + identifier + '.jpg')
             debug('Importing youtube data to mysql server')

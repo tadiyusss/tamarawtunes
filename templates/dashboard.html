@@ -170,7 +170,7 @@
                 </tr>
             </thead>
             <tbody class="m-5" id="musicList">
-    
+                <tr><td colspan="5" class="text-center text-muted">No music found</td></tr>
             </tbody>
         </table>
         
@@ -256,7 +256,7 @@
             if(search_query == ""){
                 data = {
                     "search_query": "all",
-                    
+
                 }
             }
             $.post("/api/get/music", data, function(result){
